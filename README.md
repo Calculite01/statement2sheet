@@ -1,9 +1,5 @@
 # Statement2Sheet
 
-## Link 
-
-https://statement2sheet.vercel.app/
-
 Bank statements come as PDFs — laid out for humans to read, not for spreadsheets to consume. If you need the transactions in Excel or a CSV (for bookkeeping, reconciliation, importing into accounting software, or just analysis), the usual options are manually retyping rows, wrestling with a generic PDF-table-extractor that mangles half the columns, or paying for a service built around one bank's specific layout.
 
 Statement2Sheet does one thing: you drop in a statement PDF, and you get back a spreadsheet of every transaction on it — as a `.xlsx` or `.csv` — in seconds, with no sign-up and nothing stored afterward.
