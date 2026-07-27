@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: #F7F8FA;
+  background-image:
+    linear-gradient(#E4E7EC 1px, transparent 1px);
+  background-size: 100% 2.25rem;
+  color: #141B2E;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid #1F7A5C;
+  outline-offset: 2px;
+}
+
+/* Perforated edge, like a tear-off ledger sheet */
+.perforated::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background-image: radial-gradient(circle, #C7CCD6 1.1px, transparent 1.2px);
+  background-size: 10px 1px;
+  background-repeat: repeat-x;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
