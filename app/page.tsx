@@ -145,7 +145,7 @@ export default function Home() {
       </section>
 
       <p className="mt-6 text-center font-mono text-xs text-slate">
-        Files are processed in memory and never written to disk.
+        PDF to Excel/CSV Converter
       </p>
     </main>
   );
