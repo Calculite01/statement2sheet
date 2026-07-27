@@ -1,41 +1,30 @@
 # Statement2Sheet
 
-Drop in a bank statement PDF, get back a downloadable Excel (.xlsx) or CSV file of every transaction.
+Bank statements come as PDFs — laid out for humans to read, not for spreadsheets to consume. If you need the transactions in Excel or a CSV (for bookkeeping, reconciliation, importing into accounting software, or just analysis), the usual options are manually retyping rows, wrestling with a generic PDF-table-extractor that mangles half the columns, or paying for a service built around one bank's specific layout.
 
-## Stack
+Statement2Sheet does one thing: you drop in a statement PDF, and you get back a spreadsheet of every transaction on it — as a `.xlsx` or `.csv` — in seconds, with no sign-up and nothing stored afterward.
 
-- Next.js 14 (App Router, TypeScript)
-- Tailwind CSS (hand-rolled components in a ledger/receipt visual style — no shadcn CLI dependency, so there's nothing to install beyond `npm install`)
-- `@google/genai` calling Gemini (`gemini-flash-latest`, with automatic fallback through `gemini-3.6-flash` → `gemini-3.5-flash` → `gemini-3.5-flash-lite` if a model is at capacity or has been deprecated)
-- `xlsx` and `papaparse` for generating the spreadsheet **in the browser** — the server only ever returns JSON
+## The core idea: no fixed schema
 
-## Local development
+Every bank statement lays out its transaction table differently. One might use `Date / Description / Withdrawal / Deposit / Balance`. Another uses `Posting Date / Merchant / Amount`. A business account might have a dozen columns; a basic checking statement might have four.
 
-```bash
-npm install
-cp .env.local.example .env.local
-# edit .env.local and set GEMINI_API_KEY
-npm run dev
-```
-
-Open http://localhost:3000.
+Most statement converters handle this by forcing everything into one predefined schema (a generic "date, description, debit, credit, balance" shape) — which quietly drops or mangles anything that doesn't fit. Statement2Sheet doesn't do that. It reads whatever columns the statement actually has, under whatever headers it actually uses, and reproduces that same table structure in the output. A four-column statement gets a four-column spreadsheet with the original headers; a twelve-column one gets twelve. Nothing is renamed, normalized, or forced into someone else's idea of what a bank statement should look like.
 
 ## How it works
 
-1. The client uploads the PDF as `multipart/form-data` to `POST /api/convert`.
-2. The API route reads the file into an in-memory buffer (never written to disk), base64-encodes it, and sends it to Gemini as inline PDF data along with a prompt that asks for strict JSON back (date, description, debit, credit, balance).
-3. If the primary model returns a capacity/429-style error, the route automatically retries with the next model in the fallback chain before giving up.
-4. The route returns structured JSON only — no API key or provider details ever reach the browser.
-5. The client turns that JSON into an `.xlsx` (via `xlsx`) or `.csv` (via `papaparse`) file entirely client-side and triggers a download, then resets the upload state.
+1. **You drop in a PDF.** It never leaves memory to touch a disk — no temp files, no storage, nothing written anywhere.
+2. **The PDF is sent to Gemini** (Google's multimodal model) with instructions to read every transaction table and return it as raw JSON, preserving the statement's own columns and row structure.
+3. **The response is parsed defensively, not strictly.** Rather than requiring the model's output to match one exact JSON shape, the server just locates wherever the list of transaction rows is in the response and reads each row's keys as-is. This means the tool works across wildly different statement layouts without needing a schema update for each one — and it means an unusual or malformed model response fails gracefully with a clear error instead of silently producing wrong data.
+4. **The columns of the final spreadsheet are derived from the data itself** — the union of whatever keys showed up across the extracted rows, in the order they were first seen. Whatever the statement's own layout was, that's what comes out.
+5. **The spreadsheet is built in your browser**, not on the server — the server's job ends at handing back JSON. Your browser turns that JSON into the actual `.xlsx` or `.csv` file and downloads it.
+6. **The upload resets automatically** once a conversion succeeds, so the app is immediately ready for the next statement.
 
-## Deploying to Vercel
+## What it deliberately doesn't do
 
-1. Push this project to a Git repo and import it in Vercel.
-2. In **Project → Settings → Environment Variables**, add `GEMINI_API_KEY` (do **not** commit `.env.local`).
-3. Deploy. The API route sets `export const maxDuration = 60` so it fits Vercel's default serverless function timeout, and keeps request/response bodies well under the default payload limit (uploads are capped at 15MB client- and server-side).
+- **No accounts, no history, no stored files.** Each conversion is a one-off, in-memory-only round trip. There's nothing to leak and nothing to clean up.
+- **No forced categorization or reformatting of amounts.** Numbers come out exactly as printed (currency symbols and formatting included) rather than being reinterpreted, since assuming which columns are "amounts" would reintroduce the fixed-schema problem this project is trying to avoid.
+- **No guarantee of a single output shape across different statements.** Converting two different banks' statements will legitimately produce two spreadsheets with different columns — that's the point, not a bug.
 
-## Notes / things to double check before shipping
+## Handling the rough edges
 
-- Google retires Gemini model IDs faster than most APIs — `gemini-2.5-flash` and `gemini-1.5-flash` were both already gone for new API keys as of this writing (they now 404 with "no longer available to new users"). The fallback chain here uses `gemini-flash-latest` (an alias Google keeps pointed at their current recommended Flash model) plus a few explicit pinned IDs as backups. Check https://ai.google.dev/gemini-api/docs/models before deploying, and don't be surprised if the pinned IDs need updating again in a few months.
-- Gemini's JSON output is asked for with `responseMimeType: "application/json"`, but the route still defensively strips markdown fences and validates shape before trusting it.
-- There's no persistence layer by design (stateless, per the brief) — nothing is stored server-side, so there's no history/audit trail across conversions. Add one deliberately if you need it.
+PDF-to-structured-data extraction isn't perfectly reliable — statements get corrupted, password-protected, or oddly scanned, and the underlying AI model occasionally times out. Statement2Sheet is built to fail informatively rather than silently: a busy model automatically retries against alternates before giving up, and failures surface as a specific, honest message (high demand, a configuration problem, or a statement that genuinely couldn't be read) instead of a blank result or a wrong one.
