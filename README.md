@@ -4,6 +4,10 @@ Bank statements come as PDFs — laid out for humans to read, not for spreadshee
 
 Statement2Sheet does one thing: you drop in a statement PDF, and you get back a spreadsheet of every transaction on it — as a `.xlsx` or `.csv` — in seconds, with no sign-up and nothing stored afterward.
 
+## Website Link
+
+https://statement2sheet.vercel.app/
+
 ## The core idea: no fixed schema
 
 Every bank statement lays out its transaction table differently. One might use `Date / Description / Withdrawal / Deposit / Balance`. Another uses `Posting Date / Merchant / Amount`. A business account might have a dozen columns; a basic checking statement might have four.
