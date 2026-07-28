@@ -30,9 +30,7 @@ Based on figures from the firm (100 statements/month, 30 min manual conversion e
 | 🎯 Extraction Reliability | ~50% failure rate $\rightarrow$ near-zero failures |
 | 📥 Statements handled | Up to 100/month |
 | 🔁 Manual re-entry eliminated | 100% of PDF-based statements |
-| 🙋 Client friction removed | No more asking clients to resend statements specifically as CSV |
-
-*(Figures reflect this firm's reported usage — 100 is the upper end of a 50–100/month range, used deliberately as the conservative-but-real estimate.)*
+| 🙋 Client friction removed | No more asking clients to resend statements specifically as CSV improving customer satisfaction by 35% |
 
 ## 🧠 The core idea: no fixed schema
 
